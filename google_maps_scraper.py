@@ -336,7 +336,8 @@ class GoogleMapsScraper:
                 'cuisine_type': None,
                 'opening_hours': None,
                 'services': [],
-                'review_highlights': []
+                'review_highlights': [],
+                'coordinates': {'lat': None, 'lng': None}
             }
             
             # Extract place name and address from the structured data
@@ -620,6 +621,42 @@ class GoogleMapsScraper:
             
             place_info['images'] = images
             
+            # Extract coordinates (latitude and longitude)
+            try:
+                # Coordinates are found at place_data[14][9][2] for latitude and place_data[14][9][3] for longitude
+                # Based on debugging, these are the confirmed indices for Google Maps API responses
+                
+                # Extract latitude
+                lat_value = self.safe_get(place_data, [14, 9, 2])
+                if isinstance(lat_value, (int, float)) and -90 <= lat_value <= 90:
+                    place_info['coordinates']['lat'] = lat_value
+                
+                # Extract longitude  
+                lng_value = self.safe_get(place_data, [14, 9, 3])
+                if isinstance(lng_value, (int, float)) and -180 <= lng_value <= 180:
+                    place_info['coordinates']['lng'] = lng_value
+                
+                # Fallback: try alternative coordinate locations if primary ones fail
+                if place_info['coordinates']['lat'] is None or place_info['coordinates']['lng'] is None:
+                    # Try alternative locations
+                    for lat_indices in [[14, 1, 2], [14, 0, 2]]:
+                        if place_info['coordinates']['lat'] is None:
+                            lat_value = self.safe_get(place_data, lat_indices)
+                            if isinstance(lat_value, (int, float)) and -90 <= lat_value <= 90:
+                                place_info['coordinates']['lat'] = lat_value
+                                break
+                    
+                    for lng_indices in [[14, 1, 3], [14, 0, 3]]:
+                        if place_info['coordinates']['lng'] is None:
+                            lng_value = self.safe_get(place_data, lng_indices)
+                            if isinstance(lng_value, (int, float)) and -180 <= lng_value <= 180:
+                                place_info['coordinates']['lng'] = lng_value
+                                break
+                
+            except Exception as e:
+                # Silently handle coordinate extraction errors
+                place_info['coordinates'] = {'lat': None, 'lng': None}
+            
             return place_info if place_info.get('name') else None
             
         except (IndexError, TypeError) as e:
@@ -717,9 +754,9 @@ class GoogleMapsScraper:
     def get_zoom_levels(self, radius_km: float, min_zoom: int = 10) -> List[int]:
         """Get zoom levels for searching based on radius and minimum zoom preference
         """
-        # Test zoom levels from min_zoom to 18 (respecting user's minimum zoom preference)
+        # Test zoom levels from min_zoom to 21 (respecting user's minimum zoom preference)
         start_zoom = max(10, min_zoom)  # Ensure we don't go below zoom 10
-        zoom_levels = list(range(start_zoom, 19))
+        zoom_levels = list(range(start_zoom, 22))
         
         return zoom_levels
     
