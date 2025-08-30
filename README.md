@@ -30,7 +30,7 @@ pip install -r requirements.txt
 ### Basic Usage
 
 ```bash
-python google_maps_scraper.py --lat 31.1454645 --lng 30.1157236 --query "restaurants" --max-results 50
+python google_maps_scraper.py --lat 31.1454645 --lng 30.1157236 --query "restaurants" --max-results 50 --search-radius 10
 ```
 
 ### Advanced Usage
@@ -42,7 +42,7 @@ python google_maps_scraper.py \
   --zoom 14 \
   --query "مطعم" \
   --max-results 100 \
-  --search-radius 500 \
+  --search-radius 15 \
   --output results.json \
   --min-delay 0.5 \
   --max-delay 1.5 \
